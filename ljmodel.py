@@ -66,41 +66,23 @@ class Box():
 
         return Box(size, particles, dt)
 
+    # TODO: this is not beautifull at all
     def move(self):
+        forces = [0. for i in np.arange(len(self.particles))]
         for i in np.arange(len(self.particles)):
             particle = self.particles[i]
-            F = self.force(particle, i)
-            particle.move(F, self.size, self.dt)
 
-    # TODO: two loops isn't good
-    def force(self, particle, i):
-        F = np.array([0., 0., 0.])
-        for k in np.arange(i):
-            interacting = self.particles[k]
-            r_other = interacting.previous
-            delta_r = r_other - particle.radius_vector
+            for k in np.arange(i+1, len(self.particles)):
+                interacting = self.particles[k]
+                delta_r = interacting.radius_vector - particle.radius_vector
 
-            for t in np.arange(3):
-                if delta_r[t] > self.size / 2:
-                    delta_r[t] -= self.size
-                elif delta_r[t] < -self.size / 2:
-                    delta_r[t] += self.size
+                delta_r[delta_r > self.size / 2] -= self.size
+                delta_r[delta_r < self.size / 2] += self.size
 
-            F += Box.simple_force(delta_r)
-
-        for k in np.arange(i + 1, len(self.particles)):
-            interacting = self.particles[k]
-            r_other = interacting.radius_vector
-            delta_r = r_other - particle.radius_vector
-
-            for t in np.arange(3):
-                if delta_r[t] > self.size / 2:
-                    delta_r[t] -= self.size
-                elif delta_r[t] < -self.size / 2:
-                    delta_r[t] += self.size
-
-            F += Box.simple_force(delta_r)
-        return F
+                F = Box.simple_force(delta_r)
+                forces[i] += F
+                forces[k] -= F
+            particle.move(forces[i], self.size, self.dt)
 
     def simple_force(delta_r):
         module = np.linalg.norm(delta_r)
