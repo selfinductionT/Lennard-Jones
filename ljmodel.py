@@ -12,10 +12,12 @@ class Particle():
         r_new %= size
         self.previous, self.radius_vector = self.radius_vector, r_new
 
-    # TODO
-    def get_velocity(self, dt):
-        # what if particle crossed the boarder
-        return (self.radius_vector - self.previous)
+    def mv_and_get_velocity(self, F, size, dt):
+        r_new = 2*self.radius_vector - self.previous + F*dt**2
+        velocity = (r_new - self.radius_vector)
+        r_new %= size
+        self.previous, self.radius_vector = self.radius_vector, r_new
+        return velocity
 
 
 class Box():
