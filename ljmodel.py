@@ -13,7 +13,7 @@ class Particle():
 
     def mv_and_get_velocity(self, F, size, dt):
         r_new = 2*self.radius_vector - self.previous + F*dt**2
-        velocity = (r_new - self.previous)/(2*dt)
+        velocity = (r_new - self.radius_vector)/dt
         r_new %= size
         self.previous, self.radius_vector = self.radius_vector, r_new
         return velocity
@@ -26,54 +26,56 @@ class Box():
         self.dt = dt
         self.N = N
 
-    def make_box(N, size, velocity, dt):
-        particles = []
-        alpha = np.ceil(np.cbrt(N))
-        x0 = size / alpha  # size of cell
-        n = 0
+#    def make_box(N, size, velocity, dt):
+#        particles = []
+        # alpha = np.ceil(np.cbrt(N))
+        # x0 = size / alpha  # size of cell
+        # n = 0
 
-        for i in np.arange(alpha):
-            for j in np.arange(alpha):
-                for k in np.arange(alpha):
-                    r0 = x0 * (np.array([i, j, k]) + 0.5)
-                    r1 = r0 + velocity*dt
-                    particles.append(Particle(r0, r1))
-                    n += 1
+        # for i in np.arange(alpha):
+        #     for j in np.arange(alpha):
+        #         for k in np.arange(alpha):
+        #             r0 = x0 * (np.array([i, j, k]) + 0.5)
+        #             r1 = r0 + velocity*dt
+        #             particles.append(Particle(r0, r1))
+        #             n += 1
 
-                    if n == N:
-                        return Box(N, size, particles, dt)
+        #             if n == N:
+        #                 return Box(N, size, particles, dt)
 
-        return Box(N, size, particles, dt)
+        # return Box(N, size, particles, dt)
 
     # TODO: momentum should equals 0 0 0
     def random_v(N, size, velocity, dt):
         particles = []
         alpha = np.ceil(np.cbrt(N))
+        y0 = size / np.ceil(N / alpha**2)
         x0 = size / alpha  # size of cell
+        x0 = np.array([x0, x0, y0])
+        velocities = np.random.rand(N, 3) * velocity
+        velocities -= velocities[::-1, :]
+        kin_energy = np.sum(velocities**2/2)
         n = 0
 
         for i in np.arange(alpha):
             for j in np.arange(alpha):
                 for k in np.arange(alpha):
                     r0 = x0 * (np.array([i, j, k]) + 0.5)
-                    vel = np.random.random(3) * velocity
-                    # vel - velocity of new particle
-                    r1 = r0 + vel*dt
-                    particles.append(Particle(r0, r1))
+                    vel = velocities[n]
+                    r = r0 + vel*dt
+                    particles.append(Particle(r0, r))
                     n += 1
-
                     if n == N:
-                        return Box(N, size, particles, dt)
+                        return (kin_energy, Box(N, size, particles, dt))
 
-        return Box(N, size, particles, dt)
+        return (kin_energy, Box(N, size, particles, dt))
 
     # TODO: this is not beautifull at all
     def move(self, need_energy=False, need_momentum=False):
         forces = [0.] * self.N
-        if need_momentum:
-            momentum = np.zeros(3)
-        if need_energy:
-            energy = 0.
+        momentum = np.zeros(3)
+        pot_energy = 0.
+        kin_energy = 0.
 
         for i in np.arange(self.N):
             particle = self.particles[i]
@@ -89,33 +91,14 @@ class Box():
                 forces[i] += F
                 forces[k] -= F
 
-                if need_energy:
-                    energy += Box.potential_energy(delta_r)
+                pot_energy += Box.potential_energy(delta_r)
 
-            if need_momentum and need_energy:
-                velocity = particle.mv_and_get_velocity(
-                    forces[i], self.size, self.dt)
-                momentum += velocity
-                energy += np.sum(np.square(velocity)) / 2
+            velocity = particle.mv_and_get_velocity(
+                forces[i], self.size, self.dt)
+            momentum += velocity
+            kin_energy += np.sum(np.square(velocity)) / 2
 
-            elif need_momentum and not (need_energy):
-                momentum += particle.mv_and_get_velocity(
-                    forces[i], self.size, self.dt)
-
-            elif need_energy and not (need_momentum):
-                velocity = particle.mv_and_get_velocity(
-                    forces[i], self.size, self.dt)
-                energy += np.sum(np.square(velocity)) / 2
-
-            else:
-                particle.move(forces[i], self.size, self.dt)
-
-        if need_momentum and need_energy:
-            return (energy, momentum)
-        elif need_energy:
-            return energy
-        elif need_momentum:
-            return momentum
+        return (pot_energy, kin_energy, kin_energy + pot_energy)
 
     def potential_energy(delta_r):
         module = np.linalg.norm(delta_r)
