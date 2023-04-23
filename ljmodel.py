@@ -6,15 +6,10 @@ class Particle():
         self.radius_vector = coordinates
         self.previous = start_coordinates
 
-    def move(self, F, size, dt):
-        r_new = 2*self.radius_vector - self.previous + F*dt**2
-        r_new %= size
-        self.previous, self.radius_vector = self.radius_vector, r_new
-
     def mv_and_get_velocity(self, F, size, dt):
         delta = self.radius_vector - self.previous
-        delta[delta > size / 2] -= size
-        delta[delta < -size / 2] += size
+        delta[delta > 0.75*size] -= size
+        delta[delta < -0.75*size] += size
 
         r_new = self.radius_vector + delta + F*dt**2
         velocity = (r_new - self.radius_vector)/dt
