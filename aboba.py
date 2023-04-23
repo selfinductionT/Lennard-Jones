@@ -28,38 +28,42 @@ pot_energy[0] = pot
 
 tics = np.linspace(1, 40, num=40)
 
-for i in np.arange(1, 40):
-    pot_energy[i], kin_energy[i] = a.move()
+for i in np.arange(1, 400):
+    if i % 10 == 0:
+        pot_energy[i//10], kin_energy[i//10] = a.move()
+        print(i//10)
+    else:
+        a.move()
 
 
 print(tics)
 
-# figure, axis = plt.subplots(2, 2)
+figure, axis = plt.subplots(2, 2)
 
-# axis[0, 0].scatter(tics, pot_energy)
-# axis[0, 0].set_title("potential energy")
+axis[0, 0].scatter(tics, pot_energy)
+axis[0, 0].set_title("potential energy")
 
-# axis[0, 1].scatter(tics, kin_energy)
-# axis[0, 1].set_title("kinetic energy")
+axis[0, 1].scatter(tics, kin_energy)
+axis[0, 1].set_title("kinetic energy")
 
-# axis[1, 0].scatter(tics, pot_energy + kin_energy)
-# axis[1, 0].set_title("mechanical energy")
+axis[1, 0].scatter(tics, pot_energy + kin_energy)
+axis[1, 0].set_title("mechanical energy")
 
-plt.xlabel(r'Время работы программы, тиков', fontsize=14)
-plt.ylabel(r'Энергия, у.е.', fontsize=14)
+# plt.xlabel(r'Время работы программы, тиков', fontsize=14)
+# plt.ylabel(r'Энергия, у.е.', fontsize=14)
 
-plt.title(r'График зависимости разных видов энергии от времени', fontsize=14)
-plt.grid(True)
+# plt.title(r'График зависимости разных видов энергии от времени', fontsize=14)
+# plt.grid(True)
 
-plt.errorbar(tics, pot_energy + kin_energy, fmt='o',
-             color='black', capsize=3, label=r'Полная механическая энергия')
+# plt.errorbar(tics, pot_energy + kin_energy, fmt='o',
+#              color='black', capsize=3, label=r'Полная механическая энергия')
 
-plt.errorbar(tics, kin_energy, fmt='o',
-             color='red', capsize=3, label=r'Кинетическая энергия частиц')
+# plt.errorbar(tics, kin_energy, fmt='o',
+#              color='red', capsize=3, label=r'Кинетическая энергия частиц')
 
-plt.errorbar(tics, pot_energy, fmt='o',
-             color='green', capsize=3, label=r'Потенциальная энергия частиц')
+# plt.errorbar(tics, pot_energy, fmt='o',
+#              color='green', capsize=3, label=r'Потенциальная энергия частиц')
 
-plt.legend(loc='best', fontsize=12)
+# plt.legend(loc='best', fontsize=12)
 
 plt.show()
