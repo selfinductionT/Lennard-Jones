@@ -1,13 +1,22 @@
 import ljparser as parser
 import ljmodel as model
 import numpy as np
-import matplotlib.pyplot as plt
+import time
+
+steps = 10000  # total number of iterations
 
 kin, a = parser.parse("input.txt")
 pot = 0.
+displacement = 0.
 
+
+start = time.time()
+
+# get total potential energy after first step
 for i in np.arange(a.N):
     particle = a.particles[i]
+
+    displacement += np.sum(particle.displacement**2)
 
     for k in np.arange(i+1, a.N):
         interacting = a.particles[k]
@@ -19,51 +28,42 @@ for i in np.arange(a.N):
         pot += model.Box.potential_energy(delta_r)
 
 
-kin_energy = np.zeros(40)
-pot_energy = np.zeros(40)
+kin_energy = np.zeros(steps)
+pot_energy = np.zeros(steps)
+average_displacement = np.zeros(steps)
 
 kin_energy[0] = kin
 pot_energy[0] = pot
+average_displacement[0] = displacement/a.N
+
+tics = np.linspace(1, steps, num=steps)
+
+for i in np.arange(1, steps):
+    average_displacement[i], pot_energy[i], kin_energy[i] = a.move()
+    if (i % 1000) == 0:
+        print(i)
 
 
-tics = np.linspace(1, 40, num=40)
+# distribution function
+velocities_x = a.get_velocities_x()
 
-for i in np.arange(1, 400):
-    if i % 10 == 0:
-        pot_energy[i//10], kin_energy[i//10] = a.move()
-        print(i//10)
-    else:
-        a.move()
+end = time.time()
+print(end - start)
 
 
-print(tics)
+# average_displacement = np.asarray(
+#     [np.sum(average_displacement[:i+1], axis=0) for i in np.arange(steps)]
+# )
 
-figure, axis = plt.subplots(2, 2)
+with open("energy.csv", "w") as f:
+    for (n, pot, kin) in zip(tics, pot_energy, kin_energy):
+        f.write(str(n) + ';' + str(pot) + ';' + str(kin) + '\n')
 
-axis[0, 0].scatter(tics, pot_energy)
-axis[0, 0].set_title("potential energy")
+with open("maxwell.csv", "w") as f:
+    for velocity in velocities_x:
+        f.write(str(velocity)+'\n')
 
-axis[0, 1].scatter(tics, kin_energy)
-axis[0, 1].set_title("kinetic energy")
-
-axis[1, 0].scatter(tics, pot_energy + kin_energy)
-axis[1, 0].set_title("mechanical energy")
-
-# plt.xlabel(r'Время работы программы, тиков', fontsize=14)
-# plt.ylabel(r'Энергия, у.е.', fontsize=14)
-
-# plt.title(r'График зависимости разных видов энергии от времени', fontsize=14)
-# plt.grid(True)
-
-# plt.errorbar(tics, pot_energy + kin_energy, fmt='o',
-#              color='black', capsize=3, label=r'Полная механическая энергия')
-
-# plt.errorbar(tics, kin_energy, fmt='o',
-#              color='red', capsize=3, label=r'Кинетическая энергия частиц')
-
-# plt.errorbar(tics, pot_energy, fmt='o',
-#              color='green', capsize=3, label=r'Потенциальная энергия частиц')
-
-# plt.legend(loc='best', fontsize=12)
-
-plt.show()
+with open("average_d.csv", "w") as f:
+    for d in average_displacement:
+        # d = np.linalg.norm(d)
+        f.write(str(d) + '\n')
