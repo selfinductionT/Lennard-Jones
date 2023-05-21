@@ -1,6 +1,6 @@
 N = 64
 dt = 0.001
 
-size = 15
+size = 8
 
-velocity = random 0.3
+velocity = random 2
